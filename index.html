@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta name="google-site-verification" content="MXixZJJj7dAGS1n0e1eE5yY1FznCadGaJSuvMLW5O4Y" />
+    <meta charset="UTF-8">
+    <title>Game Price Tracker</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #121212; color: #ffffff; padding: 30px; text-align: center; }
+        .flags-container { margin-bottom: 25px; }
+        .flag-btn { font-size: 28px; padding: 10px 20px; margin: 0 8px; border: 2px solid transparent; border-radius: 8px; background: #1e1e1e; cursor: pointer; color: white; }
+        .flag-btn-active { border-color: #00adb5; background-color: #2a2a2a; }
+        .search-box { margin-bottom: 30px; }
+        input[type="text"] { padding: 12px; width: 320px; border-radius: 6px; border: 1px solid #333; font-size: 16px; background: #1e1e1e; color: white; }
+        button { padding: 12px 24px; font-size: 16px; background-color: #00adb5; color: white; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .results { text-align: left; max-width: 600px; margin: 0 auto; }
+        .section-title { font-size: 20px; font-weight: bold; margin-top: 25px; padding-bottom: 5px; border-bottom: 1px solid #333; }
+        .title-main { color: #00ff88; }
+        .title-extras { color: #ff4d4d; }
+        .game-card { background: #1e1e1e; padding: 15px; border-radius: 8px; margin-top: 10px; }
+        .price { font-weight: bold; font-size: 18px; color: #ffeb3b; }
+        .discount { color: #ff4d4d; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <h2>🎮 Oyun Fiyat Takipçisi</h2>
+
+    <!-- Bayrak Seçimi -->
+    <div class="flags-container">
+        <form method="POST" style="display:inline;">
+            <input type="hidden" name="region" value="TR">
+            <input type="hidden" name="game_name" value="{{ searched_game }}">
+            <button type="submit" class="flag-btn {% if selected_region == 'TR' %}flag-btn-active{% endif %}">🇹🇷 Türkiye</button>
+        </form>
+        <form method="POST" style="display:inline;">
+            <input type="hidden" name="region" value="US">
+            <input type="hidden" name="game_name" value="{{ searched_game }}">
+            <button type="submit" class="flag-btn {% if selected_region == 'US' %}flag-btn-active{% endif %}">🇺🇸 Amerika</button>
+        </form>
+        <form method="POST" style="display:inline;">
+            <input type="hidden" name="region" value="DE">
+            <input type="hidden" name="game_name" value="{{ searched_game }}">
+            <button type="submit" class="flag-btn {% if selected_region == 'DE' %}flag-btn-active{% endif %}">🇩🇪 Almanya</button>
+        </form>
+        <form method="POST" style="display:inline;">
+            <input type="hidden" name="region" value="GB">
+            <input type="hidden" name="game_name" value="{{ searched_game }}">
+            <button type="submit" class="flag-btn {% if selected_region == 'GB' %}flag-btn-active{% endif %}">🇬🇧 İngiltere</button>
+        </form>
+    </div>
+
+    <!-- Arama Kutusu -->
+    <div class="search-box">
+        <form method="POST">
+            <input type="hidden" name="region" value="{{ selected_region }}">
+            <label for="game_search" style="display:none;">Oyun Ara</label>
+            <input type="text" id="game_search" name="game_name" placeholder="Oyun adı girin..." value="{{ searched_game }}" required>
+            <button type="submit">Ara</button>
+        </form>
+    </div>
+
+    <!-- Sonuçlar -->
+    <div class="results">
+        {% if main_game %}
+            <div class="section-title title-main">ANA OYUN</div>
+            <div class="game-card">
+                <div><strong>Oyun:</strong> {{ main_game.name }}</div>
+                <div><strong>Mağaza:</strong> Steam</div>
+                <div><strong>Bölge:</strong> {{ region_name }}</div>
+                {% if main_game.price %}
+                    {% set discount_val = main_game.price.get('discount') or main_game.price.get('discount_percent') or 0 %}
+                    <div class="price">
+                        {{ (main_game.price.get('final', 0) / 100) }} {{ main_game.price.get('currency', 'USD') }}
+                        {% if discount_val > 0 %}
+                            <span class="discount">(Normali: {{ main_game.price.get('initial', 0) / 100 }} {{ main_game.price.get('currency', 'USD') }} - %{{ discount_val }} İndirim)</span>
+                        {% endif %}
+                    </div>
+                {% else %}
+                    <div class="price">Ücretsiz / Fiyat Bilgisi Yok</div>
+                {% endif %}
+            </div>
+        {% endif %}
+
+        {% if extras %}
+            <div class="section-title title-extras">EKSTRALAR</div>
+            {% for item in extras %}
+                <div class="game-card">
+                    <div><strong>Oyun:</strong> {{ item.name }}</div>
+                    <div><strong>Mağaza:</strong> Steam</div>
+                    <div><strong>Bölge:</strong> {{ region_name }}</div>
+                    {% if item.price %}
+                        {% set extra_discount = item.price.get('discount') or item.price.get('discount_percent') or 0 %}
+                        <div class="price">
+                            {{ (item.price.get('final', 0) / 100) }} {{ item.price.get('currency', 'USD') }}
+                            {% if extra_discount > 0 %}
+                                <span class="discount">(Normali: {{ item.price.get('initial', 0) / 100 }} {{ item.price.get('currency', 'USD') }} - %{{ extra_discount }} İndirim)</span>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <div class="price">Ücretsiz / Fiyat Bilgisi Yok</div>
+                    {% endif %}
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if not_found %}
+            <p style="text-align:center; color:#ff4d4d;">Aradığınız oyun bulunamadı.</p>
+        {% endif %}
+    </div>
+
+</body>
+</html>
