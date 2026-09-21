@@ -21,9 +21,8 @@ REGIONS = {
     "GB": {"name": "İngiltere 🇬🇧", "cc": "gb"}
 }
 
-
-@app.route("/", methods=["GET", "POST"])
-def index():
+@app.route('/', methods=["GET", "POST"])
+def home():
     selected_region = "TR"
     searched_game = ""
     main_game = None
@@ -59,7 +58,6 @@ def index():
         extras=extras,
         not_found=not_found
     )
-
 
 if __name__ == "__main__":
     app.run(debug=True)
